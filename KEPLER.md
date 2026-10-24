@@ -1,6 +1,6 @@
 # NVIDIA Kepler GPU Support (sm_35 / sm_37) in llama.cpp
 
-This branch adds and maintains support for **NVIDIA Kepler GPUs** (Compute Capability 3.5 and 3.7) in `llama.cpp`.
+This branch adds and maintains support for **NVIDIA Kepler GPUs** (Compute Capability 3.5 and 3.7) in modern `llama.cpp`.
 
 Supported GPUs include:
 * **sm_35**: GeForce GT 730 (GK208B), GeForce GTX 780 / 780 Ti, Tesla K40, Tesla K20
@@ -36,10 +36,27 @@ cmake .. \
   -DCMAKE_BUILD_TYPE=Release \
   -DLLAMA_BUILD_TESTS=OFF
 
-cmake --build . --config Release -j$(nproc)
+# On systems with legacy CPUs lacking AVX/BMI2 (e.g. Core 2 Duo):
+# add: -DGGML_AVX=OFF -DGGML_AVX2=OFF -DGGML_FMA=OFF -DGGML_F16C=OFF -DGGML_SSE42=OFF -DGGML_BMI2=OFF
+
+cmake --build . --target llama-cli llama-server -j$(nproc)
 ```
 
 > **Note on Required Flags**:
 > * `-DCMAKE_CUDA_ARCHITECTURES=35` (or `37` for Tesla K80): targets the Kepler compute capability.
 > * `-DGGML_CUDA_GRAPHS=OFF`: Required; CUDA Graphs require sm_60+ and will crash on Kepler.
 > * `-DGGML_NATIVE=OFF`: Prevents host CPU detection from overriding GPU targets.
+
+---
+
+## Device Verification
+
+Verify that your GPU is detected:
+```bash
+./bin/llama-cli --list-devices
+```
+Output:
+```text
+Available devices:
+  CUDA0: NVIDIA GeForce GT 730 (2000 MiB, 1495 MiB free)
+```
